@@ -10,7 +10,8 @@ test.describe('Assignment 4 - Scenario 2: Search Flow', () => {
 
   // ── Positive Case: Exact match search ─────────────────
   test('Search returns relevant results for exact keyword', async ({ page }) => {
-    await page.goto('https://automationexercise.com/products', { waitUntil: 'domcontentloaded' });
+    await page.goto('https://automationexercise.com/products',
+      { waitUntil: 'domcontentloaded', timeout: 60000 });
 
     // Step 1 — Enter search keyword
     await page.locator('#search_product').fill('Tops');
@@ -20,7 +21,7 @@ test.describe('Assignment 4 - Scenario 2: Search Flow', () => {
     await expect(page).toHaveURL(/products/);
 
     // Validate 2 — Search results heading appears
-    await expect(page.locator('h2.title')).toContainText('Searched Products');
+    await expect(page.getByText('Searched Products')).toBeVisible({ timeout: 8000 });
 
     // Validate 3 — At least one product result is shown
     const products = page.locator('.productinfo');
@@ -33,14 +34,15 @@ test.describe('Assignment 4 - Scenario 2: Search Flow', () => {
 
   // ── Partial match search ───────────────────────────────
   test('Partial match search returns results', async ({ page }) => {
-    await page.goto('https://automationexercise.com/products', { waitUntil: 'domcontentloaded' });
+    await page.goto('https://automationexercise.com/products',
+      { waitUntil: 'domcontentloaded', timeout: 60000 });
 
     // Step 1 — Enter partial keyword
     await page.locator('#search_product').fill('jean');
     await page.locator('#submit_search').click();
 
     // Validate 1 — Results section appears
-    await expect(page.locator('h2.title')).toContainText('Searched Products');
+    await expect(page.getByText('Searched Products')).toBeVisible({ timeout: 8000 });
 
     // Validate 2 — Products are listed
     await expect(page.locator('.productinfo').first()).toBeVisible();
@@ -48,20 +50,20 @@ test.describe('Assignment 4 - Scenario 2: Search Flow', () => {
 
   // ── Case sensitivity check ─────────────────────────────
   test('Search is not case sensitive', async ({ page }) => {
-    await page.goto('https://automationexercise.com/products', { waitUntil: 'domcontentloaded' });
+    await page.goto('https://automationexercise.com/products',
+      { waitUntil: 'domcontentloaded', timeout: 60000 });
 
-    // Search with uppercase
-    await page.locator('#search_product').fill('TOPS');
-    await page.locator('#submit_search').click();
-
-    await expect(page.locator('h2.title')).toContainText('Searched Products');
-    const upperResults = await page.locator('.productinfo').count();
-
-    // Search again with lowercase
+    // Search with lowercase first
     await page.locator('#search_product').fill('tops');
     await page.locator('#submit_search').click();
-
+    await expect(page.getByText('Searched Products')).toBeVisible({ timeout: 8000 });
     const lowerResults = await page.locator('.productinfo').count();
+
+    // Search again with uppercase
+    await page.locator('#search_product').fill('TOPS');
+    await page.locator('#submit_search').click();
+    await expect(page.getByText('Searched Products')).toBeVisible({ timeout: 8000 });
+    const upperResults = await page.locator('.productinfo').count();
 
     // Validate — same number of results regardless of case
     expect(upperResults).toBe(lowerResults);
@@ -69,7 +71,8 @@ test.describe('Assignment 4 - Scenario 2: Search Flow', () => {
 
   // ── Negative Case: No results scenario ────────────────
   test('No results scenario — invalid keyword shows empty results', async ({ page }) => {
-    await page.goto('https://automationexercise.com/products', { waitUntil: 'domcontentloaded' });
+    await page.goto('https://automationexercise.com/products',
+      { waitUntil: 'domcontentloaded', timeout: 60000 });
 
     // Step 1 — Enter keyword that returns no results
     await page.locator('#search_product').fill('xyzabc123notexist');
@@ -79,7 +82,7 @@ test.describe('Assignment 4 - Scenario 2: Search Flow', () => {
     await expect(page).toHaveURL(/products/);
 
     // Validate 2 — Searched Products heading shows
-    await expect(page.locator('h2.title')).toContainText('Searched Products');
+    await expect(page.getByText('Searched Products')).toBeVisible({ timeout: 8000 });
 
     // Validate 3 — No products listed
     const count = await page.locator('.productinfo').count();

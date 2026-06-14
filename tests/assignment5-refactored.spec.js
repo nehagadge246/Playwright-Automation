@@ -17,7 +17,8 @@ test.describe('Assignment 5 - Part 1: Refactored Locators', () => {
 
   // ── Refactor 1: Login form ─────────────────────────────
   test('Login page — refactored with getByPlaceholder and getByRole', async ({ page }) => {
-    await page.goto(`${BASE}/login`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`${BASE}/login`,
+      { waitUntil: 'domcontentloaded', timeout: 60000 });
 
     // ❌ Before: page.locator('[data-qa="login-email"]')
     // ✅ After:  getByPlaceholder
@@ -29,7 +30,8 @@ test.describe('Assignment 5 - Part 1: Refactored Locators', () => {
 
   // ── Refactor 2: Signup form ────────────────────────────
   test('Signup form — refactored with getByPlaceholder and getByRole', async ({ page }) => {
-    await page.goto(`${BASE}/login`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`${BASE}/login`,
+      { waitUntil: 'domcontentloaded', timeout: 60000 });
 
     // ❌ Before: page.locator('[data-qa="signup-name"]')
     // ✅ After:  getByPlaceholder
@@ -42,7 +44,8 @@ test.describe('Assignment 5 - Part 1: Refactored Locators', () => {
 
   // ── Refactor 3: Search ─────────────────────────────────
   test('Search — refactored with locator ID and getByText', async ({ page }) => {
-    await page.goto(`${BASE}/products`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`${BASE}/products`,
+      { waitUntil: 'domcontentloaded', timeout: 60000 });
 
     // ❌ Before: loose text selector
     // ✅ After:  specific ID locators to avoid strict mode violation
@@ -50,7 +53,7 @@ test.describe('Assignment 5 - Part 1: Refactored Locators', () => {
     await page.locator('#submit_search').click();
 
     // ✅ After: getByText
-    await expect(page.getByText('Searched Products')).toBeVisible();
+    await expect(page.getByText('Searched Products')).toBeVisible({ timeout: 10000 });
     await expect(page.locator('.productinfo').first()).toBeVisible();
   });
 
@@ -58,7 +61,8 @@ test.describe('Assignment 5 - Part 1: Refactored Locators', () => {
   test('Navigation — refactored with direct goto and getByText', async ({ page }) => {
     // ❌ Before: clicking nav link from home (blocked by ad overlay)
     // ✅ After:  navigate directly to avoid ad overlay issue
-    await page.goto(`${BASE}/products`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`${BASE}/products`,
+      { waitUntil: 'domcontentloaded', timeout: 60000 });
 
     // ✅ getByText to validate heading
     await expect(page.getByText('All Products')).toBeVisible();
@@ -71,7 +75,8 @@ test.describe('Assignment 5 - Part 1: Refactored Locators', () => {
 
   // ── Refactor 5: Contact Us form ───────────────────────
   test('Contact Us form — refactored with data-qa and getByPlaceholder', async ({ page }) => {
-    await page.goto(`${BASE}/contact_us`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`${BASE}/contact_us`,
+      { waitUntil: 'domcontentloaded', timeout: 60000 });
 
     // ❌ Before: generic CSS selector
     // ✅ After:  data-qa for unique fields, getByPlaceholder for others
@@ -98,7 +103,8 @@ test.describe('Assignment 5 - Part 2: Improved Stability', () => {
 
   // ── Fix 1: Replace hard wait with assertion-based wait ─
   test('Products page — no hard wait, assertion-based visibility', async ({ page }) => {
-    await page.goto(`${BASE}/products`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`${BASE}/products`,
+      { waitUntil: 'domcontentloaded', timeout: 60000 });
 
     // ❌ Flaky before: await page.waitForTimeout(3000)
     // ✅ Fixed: wait for element to be visible
@@ -113,7 +119,8 @@ test.describe('Assignment 5 - Part 2: Improved Stability', () => {
 
   // ── Fix 2: Flaky cart — wait for modal before closing ──
   test('Add to cart — wait for modal visibility before clicking continue', async ({ page }) => {
-    await page.goto(`${BASE}/products`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`${BASE}/products`,
+      { waitUntil: 'domcontentloaded', timeout: 60000 });
 
     await page.locator('.productinfo').first().hover();
     await page.locator('.productinfo .add-to-cart').first().click();
@@ -121,7 +128,7 @@ test.describe('Assignment 5 - Part 2: Improved Stability', () => {
     // ❌ Flaky before: immediately clicking continue
     // ✅ Fixed: wait for modal to be visible first
     const modal = page.locator('#cartModal');
-    await expect(modal).toBeVisible({ timeout: 5000 });
+    await expect(modal).toBeVisible({ timeout: 10000 });
     await expect(page.getByRole('button', { name: 'Continue Shopping' })).toBeVisible();
     await page.getByRole('button', { name: 'Continue Shopping' }).click();
     await expect(modal).not.toBeVisible();
@@ -129,18 +136,19 @@ test.describe('Assignment 5 - Part 2: Improved Stability', () => {
 
   // ── Fix 3: Search stability ────────────────────────────
   test('Search — stable with waitFor and visibility assertion', async ({ page }) => {
-    await page.goto(`${BASE}/products`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`${BASE}/products`,
+      { waitUntil: 'domcontentloaded', timeout: 60000 });
 
     const searchBox = page.locator('#search_product');
-    await expect(searchBox).toBeVisible({ timeout: 5000 });
+    await expect(searchBox).toBeVisible({ timeout: 10000 });
     await searchBox.fill('dress');
 
     // ❌ Flaky before: getByRole('button', { name: '' }) — matches 2 elements
     // ✅ Fixed: specific ID selector
     await page.locator('#submit_search').click();
 
-    await expect(page.getByText('Searched Products')).toBeVisible({ timeout: 8000 });
-    await expect(page.locator('.productinfo').first()).toBeVisible({ timeout: 8000 });
+    await expect(page.getByText('Searched Products')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('.productinfo').first()).toBeVisible({ timeout: 10000 });
 
     const results = await page.locator('.productinfo').count();
     expect(results).toBeGreaterThan(0);
@@ -150,8 +158,9 @@ test.describe('Assignment 5 - Part 2: Improved Stability', () => {
   test('Navigation — stable with URL and title assertions', async ({ page }) => {
     // ❌ Flaky before: clicking nav from home — blocked by ad overlay
     // ✅ Fixed: navigate directly to products page
-    await page.goto(`${BASE}/products`, { waitUntil: 'domcontentloaded' });
-    await expect(page.getByText('All Products')).toBeVisible({ timeout: 5000 });
+    await page.goto(`${BASE}/products`,
+      { waitUntil: 'domcontentloaded', timeout: 60000 });
+    await expect(page.getByText('All Products')).toBeVisible({ timeout: 10000 });
     await expect(page).toHaveURL(/products/);
 
     // Navigate directly to product detail — avoids ad overlay

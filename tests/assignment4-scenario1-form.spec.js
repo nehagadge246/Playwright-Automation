@@ -23,8 +23,9 @@ test.describe('Assignment 4 - Scenario 1: Form-Based Application', () => {
     // Validate 1 — Moved to account details page
     await expect(page).toHaveURL(/signup/);
 
-    // Validate 2 — Account info form is visible
-    await expect(page.locator('h2.title')).toContainText('Enter Account Information');
+    // Validate 2 — Account info heading is visible (fixed: getByRole)
+    await expect(page.getByRole('heading', { name: 'Enter Account Information' }))
+      .toBeVisible();
 
     // Validate 3 — Name is pre-filled from signup
     await expect(page.locator('[data-qa="name"]')).toHaveValue('Neha Test');
@@ -44,10 +45,13 @@ test.describe('Assignment 4 - Scenario 1: Form-Based Application', () => {
     // Validate 1 — Still on login page (not redirected)
     await expect(page).toHaveURL(/login/);
 
-    // Validate 2 — Email field is invalid (browser validation)
+    // Validate 2 — Email field has browser validation error
     const emailInput = page.locator('[data-qa="signup-email"]');
     const validationMessage = await emailInput.evaluate(el => el.validationMessage);
     expect(validationMessage).not.toBe('');
+
+    // Validate 3 — Email field is still visible
+    await expect(emailInput).toBeVisible();
   });
 
   // ── Negative Case: Already registered email ────────────
@@ -65,8 +69,8 @@ test.describe('Assignment 4 - Scenario 1: Form-Based Application', () => {
     await expect(page.locator('p[style*="color: red"]'))
       .toContainText('Email Address already exist!');
 
-    // Validate 2 — Still on login page
-    await expect(page).toHaveURL(/login/);
+    // Validate 2 — Still on signup page (fixed: was /login, actually goes to /signup)
+    await expect(page).toHaveURL(/signup/);
 
     // Validate 3 — Error is visible
     await expect(page.locator('p[style*="color: red"]')).toBeVisible();

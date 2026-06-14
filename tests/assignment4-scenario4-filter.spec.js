@@ -10,10 +10,18 @@ test.describe('Assignment 4 - Scenario 4: Filtering / Listing Page', () => {
 
   // ── Positive Case: Filter by category ─────────────────
   test('Apply category filter and validate results update', async ({ page }) => {
-    await page.goto('https://automationexercise.com/products', { waitUntil: 'domcontentloaded' });
+    await page.goto('https://automationexercise.com/products',
+      { waitUntil: 'domcontentloaded', timeout: 60000 });
 
     // Step 1 — Apply Women category filter
     await page.locator('a[href="#Women"]').click();
+
+    // Wait for accordion animation
+    await page.waitForTimeout(1000);
+
+    // Wait for submenu to expand
+    await expect(page.locator('a[href="/category_products/1"]'))
+      .toBeVisible({ timeout: 10000 });
     await page.locator('a[href="/category_products/1"]').click();
 
     // Validate 1 — URL updates to category
@@ -28,10 +36,14 @@ test.describe('Assignment 4 - Scenario 4: Filtering / Listing Page', () => {
 
   // ── Multiple filters: Men > Tshirts ───────────────────
   test('Apply multiple filters — Men category then Tshirts', async ({ page }) => {
-    await page.goto('https://automationexercise.com/products', { waitUntil: 'domcontentloaded' });
+    await page.goto('https://automationexercise.com/products',
+      { waitUntil: 'domcontentloaded', timeout: 60000 });
 
-    // Step 1 — Apply Men category
+    // Step 1 — Click Men category to expand submenu
     await page.locator('a[href="#Men"]').click();
+
+    // Wait for accordion animation to complete
+    await page.waitForTimeout(1000);
 
     // Step 2 — Apply Tshirts sub-filter
     await page.locator('a[href="/category_products/3"]').click();
@@ -48,14 +60,18 @@ test.describe('Assignment 4 - Scenario 4: Filtering / Listing Page', () => {
 
   // ── Reset filters ──────────────────────────────────────
   test('Reset filters by navigating back to all products', async ({ page }) => {
-    await page.goto('https://automationexercise.com/products', { waitUntil: 'domcontentloaded' });
+    await page.goto('https://automationexercise.com/products',
+      { waitUntil: 'domcontentloaded', timeout: 60000 });
 
     // Apply a filter first
     await page.locator('a[href="#Women"]').click();
+    await page.waitForTimeout(1000);
+    await expect(page.locator('a[href="/category_products/1"]'))
+      .toBeVisible({ timeout: 10000 });
     await page.locator('a[href="/category_products/1"]').click();
     await expect(page).toHaveURL(/category_products/);
 
-    // Reset — fixed: use exact:true to avoid strict mode violation
+    // Reset — use exact:true to avoid strict mode violation
     await page.getByRole('link', { name: 'Products', exact: true }).click();
 
     // Validate 1 — Back to all products page

@@ -37,7 +37,14 @@ test.describe('Task 1: Login Flow', () => {
     await page.locator('#password').fill('Password123');
     await page.locator('#submit').click();
     await expect(page).toHaveURL(/logged-in-successfully/);
+
+    // Click logout and explicitly wait for the resulting navigation to
+    // finish before asserting on the URL. toHaveURL alone can catch the
+    // page mid-navigation (transient blank/about:blank state) and time
+    // out reading an empty string even though the navigation succeeds
+    // moments later. waitForURL blocks until navigation actually lands.
     await page.locator('text=Log out').click();
+    await page.waitForURL(/practice-test-login/, { timeout: 15000 });
     await expect(page).toHaveURL(/practice-test-login/);
   });
 

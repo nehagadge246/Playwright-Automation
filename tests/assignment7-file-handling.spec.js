@@ -20,9 +20,11 @@ test.describe('Assignment 4 - Scenario 2: Search Flow', () => {
     await expect(page).toHaveURL(/products/);
 
     // Validate 2 — Search results heading appears
-    await expect(page.getByText('Searched Products')).toBeVisible({ timeout: 8000 });
+    await expect(page.getByText('Searched Products')).toBeVisible({ timeout: 15000 });
 
-    // Validate 3 — At least one product result is shown
+    // Validate 3 — At least one product result is shown, and rows have
+    // actually finished rendering before we inspect them
+    await page.waitForSelector('.productinfo', { timeout: 10000 });
     const products = page.locator('.productinfo');
     await expect(products.first()).toBeVisible();
 
@@ -40,9 +42,10 @@ test.describe('Assignment 4 - Scenario 2: Search Flow', () => {
     await page.locator('#submit_search').click();
 
     // Validate 1 — Results section appears
-    await expect(page.getByText('Searched Products')).toBeVisible({ timeout: 8000 });
+    await expect(page.getByText('Searched Products')).toBeVisible({ timeout: 15000 });
 
-    // Validate 2 — Products are listed
+    // Validate 2 — Products are listed, wait for rows to render first
+    await page.waitForSelector('.productinfo', { timeout: 10000 });
     await expect(page.locator('.productinfo').first()).toBeVisible();
   });
 
@@ -51,19 +54,23 @@ test.describe('Assignment 4 - Scenario 2: Search Flow', () => {
     await page.goto('https://automationexercise.com/products', { waitUntil: 'domcontentloaded' });
 
     // Search with lowercase first
+    await page.locator('#search_product').clear();
     await page.locator('#search_product').fill('tops');
     await page.locator('#submit_search').click();
-    await expect(page.getByText('Searched Products')).toBeVisible({ timeout: 8000 });
+    await expect(page.getByText('Searched Products')).toBeVisible({ timeout: 15000 });
+    await page.waitForSelector('.productinfo', { timeout: 10000 });
     const lowerResults = await page.locator('.productinfo').count();
 
-    // Search again with uppercase
+    // Clear field before searching again to avoid stale/concatenated query
+    await page.locator('#search_product').clear();
     await page.locator('#search_product').fill('TOPS');
     await page.locator('#submit_search').click();
-    await expect(page.getByText('Searched Products')).toBeVisible({ timeout: 8000 });
+    await expect(page.getByText('Searched Products')).toBeVisible({ timeout: 15000 });
+    await page.waitForSelector('.productinfo', { timeout: 10000 });
     const upperResults = await page.locator('.productinfo').count();
 
     // Validate — same number of results regardless of case
-    expect(upperResults).toBe(lowerResults);
+    expect(upperResults).toEqual(lowerResults);
   });
 
   // ── Negative Case: No results scenario ────────────────
@@ -78,7 +85,7 @@ test.describe('Assignment 4 - Scenario 2: Search Flow', () => {
     await expect(page).toHaveURL(/products/);
 
     // Validate 2 — Searched Products heading shows
-    await expect(page.getByText('Searched Products')).toBeVisible({ timeout: 8000 });
+    await expect(page.getByText('Searched Products')).toBeVisible({ timeout: 15000 });
 
     // Validate 3 — No products listed
     const count = await page.locator('.productinfo').count();

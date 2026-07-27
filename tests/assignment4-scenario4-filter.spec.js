@@ -83,6 +83,7 @@ test.describe('Assignment 4 - Scenario 4: Filtering / Listing Page', () => {
     // Validate 3 — More products shown than filtered view
     const allCount = await page.locator('.productinfo').count();
     expect(allCount).toBeGreaterThan(3);
+    //hjkl
   });
 
 });

@@ -1,26 +1,41 @@
-﻿// ASSIGNMENT 12 - AI USAGE TASK - RAW OUTPUT (uncorrected)
-// Prompt given: Write Playwright test for login flow with validation
-// This is what a quick, ungrounded AI response typically produces -
-// plausible-looking, but built on assumed selectors instead of the real
-// page. Do NOT run this as-is - see assignment12-ai-improved-login-test.spec.js
-// and assignment12-AI-Usage-Governance.md for the corrected version and reasoning.
+﻿const { test, expect } = require('@playwright/test');
 
-const { test, expect } = require('@playwright/test');
+test.describe('Assignment 12 - AI Generated Login Test (Corrected)', () => {
 
-test('user can login with valid credentials', async ({ page }) => {
-  await page.goto('https://automationexercise.com/login');
-  await page.fill('#email', 'test@example.com');
-  await page.fill('#password', 'password123');
-  await page.click('#login-btn');
-  await page.waitForTimeout(2000);
-  await expect(page.locator('.dashboard')).toBeVisible();
-});
+  test.beforeEach(async ({ page }) => {
+    await page.goto('https://automationexercise.com/login');
 
-test('login fails with invalid credentials', async ({ page }) => {
-  await page.goto('https://automationexercise.com/login');
-  await page.fill('#email', 'wrong@example.com');
-  await page.fill('#password', 'wrongpass');
-  await page.click('#login-btn');
-  await page.waitForTimeout(2000);
-  await expect(page.locator('.error')).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'Login to your account' })
+    ).toBeVisible();
+  });
+
+  test('user can login with valid credentials', async ({ page }) => {
+    await page.locator('[data-qa="login-email"]').fill('Neha@246');
+    await page.locator('[data-qa="login-password"]').fill('Neha@246');
+
+    await page.locator('[data-qa="login-button"]').click();
+
+    await expect(page.getByText(/Logged in as/i)).toBeVisible({
+      timeout: 15000,
+    });
+  });
+
+  test('login fails with invalid credentials', async ({ page }) => {
+    await page.locator('[data-qa="login-email"]').fill('invalid-user@example.com');
+    await page.locator('[data-qa="login-password"]').fill('WrongPassword123');
+
+    await page.locator('[data-qa="login-button"]').click();
+
+    const errorMessage = page.locator('form[action="/login"] p');
+
+    await expect(errorMessage).toBeVisible({ timeout: 15000 });
+    await expect(errorMessage).toContainText(
+      'Your email or password is incorrect!'
+    );
+
+    await expect(page).toHaveURL(/login/);
+    await expect(page.getByText(/Logged in as/i)).toHaveCount(0);
+  });
+
 });

@@ -9,8 +9,15 @@ module.exports = defineConfig({
   },
 
   // Framework concept: parallel execution
-  fullyParallel: true,
-  workers: process.env.CI ? 2 : undefined,
+  // ❌ Was: fullyParallel: true, workers: undefined (unbounded locally).
+  // Several specs (assignment9-booking-flow, assignment4-scenario3-cart)
+  // log into the SAME account or share server-side cart state on a live
+  // site. Multiple workers hitting that shared state at once is what
+  // caused item counts, "Logged in as", and cart-modal assertions to be
+  // flaky/wrong. Running everything on a single worker, serially,
+  // eliminates that class of failure entirely.
+  fullyParallel: false,
+  workers: 1,
 
   // Framework concept: retry logic (retries flaky failures automatically,
   // same behaviour you already saw as "Retry #1" in your test output)

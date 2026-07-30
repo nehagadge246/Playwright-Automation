@@ -15,40 +15,53 @@ const BASE_URL = 'https://automationintesting.online';
 const ADMIN_USER = 'admin';
 const ADMIN_PASS = 'password';
 
-// RBP is a React SPA and can intermittently fail to mount behind a
-// corporate proxy - same class of issue you hit with demoqa web tables.
-async function gotoAdminWithRetry(page, attempts = 3, backoffMs = 1500) {
-  for (let i = 1; i <= attempts; i++) {
-    try {
-      await page.goto(`${BASE_URL}/#/admin`, { waitUntil: 'domcontentloaded' });
-      await page.getByTestId('username').waitFor({ state: 'visible', timeout: 10000 });
-      return;
-    } catch (err) {
-      if (i === attempts) throw err;
-      await page.waitForTimeout(backoffMs * i);
+test.describe('Assignment 1: Sandbox banner (message badge) visibility via API mocking', () => {
+
+  // This site's React SPA can be genuinely slow to mount (not just
+  // ad-related like automationexercise.com). The default 60s test
+  // timeout was getting hit *during* our own retry/backoff logic before
+  // it ever got a fair shot. Give this whole file more runway.
+  test.describe.configure({ timeout: 120_000 });
+
+  // RBP is a React SPA and can intermittently fail to mount behind a
+  // corporate proxy - same class of issue you hit with demoqa web tables.
+  // Tuned so worst-case (3 failed attempts) fits inside the 120s test
+  // timeout above with room to spare.
+  async function gotoAdminWithRetry(page, attempts = 3, backoffMs = 1500) {
+    for (let i = 1; i <= attempts; i++) {
+      try {
+        await page.goto(`${BASE_URL}/#/admin`, { waitUntil: 'domcontentloaded', timeout: 20000 });
+        await page.getByTestId('username').waitFor({ state: 'visible', timeout: 10000 });
+        return;
+      } catch (err) {
+        if (i === attempts) throw err;
+        await page.waitForTimeout(backoffMs * i);
+      }
     }
   }
-}
 
-async function loginAsAdmin(page) {
-  await gotoAdminWithRetry(page);
-  await page.getByTestId('username').fill(ADMIN_USER);
-  await page.getByTestId('password').fill(ADMIN_PASS);
-  await page.getByTestId('submit').click();
-  await expect(page.getByRole('link', { name: 'Logout' })).toBeVisible({ timeout: 10000 });
-}
+  async function loginAsAdmin(page) {
+    await gotoAdminWithRetry(page);
+    await page.getByTestId('username').fill(ADMIN_USER);
+    await page.getByTestId('password').fill(ADMIN_PASS);
+    await page.getByTestId('submit').click();
+    await expect(page.getByRole('link', { name: 'Logout' })).toBeVisible({ timeout: 15000 });
 
-function mockMessageCount(page, count) {
-  return page.route('**/message/count', (route) =>
-    route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({ count }),
-    })
-  );
-}
+    // The badge only appears once the nav has fully rendered post-login;
+    // wait for it to attach before any test starts polling its text.
+    await page.locator('[href*="#/admin/messages"] span').waitFor({ state: 'attached', timeout: 15000 });
+  }
 
-test.describe('Assignment 1: Sandbox banner (message badge) visibility via API mocking', () => {
+  function mockMessageCount(page, count) {
+    return page.route('**/message/count', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ count }),
+      })
+    );
+  }
+
   test('badge reflects a mocked non-zero message count', async ({ page }) => {
     await mockMessageCount(page, 7);
     await loginAsAdmin(page);
@@ -56,7 +69,7 @@ test.describe('Assignment 1: Sandbox banner (message badge) visibility via API m
     const badge = page.locator('[href*="#/admin/messages"] span');
     await expect.poll(async () => (await badge.textContent())?.trim(), {
       message: 'message badge should reflect mocked count',
-      timeout: 10000,
+      timeout: 15000,
     }).toBe('7');
     await expect(badge).toBeVisible();
   });
@@ -68,7 +81,7 @@ test.describe('Assignment 1: Sandbox banner (message badge) visibility via API m
     const badge = page.locator('[href*="#/admin/messages"] span');
     await expect.poll(async () => (await badge.textContent())?.trim(), {
       message: 'message badge should reflect mocked zero count',
-      timeout: 10000,
+      timeout: 15000,
     }).toBe('0');
   });
 
@@ -85,7 +98,10 @@ test.describe('Assignment 1: Sandbox banner (message badge) visibility via API m
 
     await loginAsAdmin(page);
     const badge = page.locator('[href*="#/admin/messages"] span');
-    await expect(badge).toHaveText('3');
+    await expect.poll(async () => (await badge.textContent())?.trim(), {
+      message: 'badge should reflect the mocked intercepted value',
+      timeout: 15000,
+    }).toBe('3');
     expect(interceptCount).toBeGreaterThan(0);
   });
 

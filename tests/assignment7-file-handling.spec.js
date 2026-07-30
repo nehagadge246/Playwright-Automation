@@ -1,20 +1,16 @@
 const { test, expect } = require('@playwright/test');
+const { gotoWithRetry, clickWithAdRetry } = require('./utils/siteHelpers');
 
-// ══════════════════════════════════════════════════════════
-// Assignment 4 | Scenario 2: Search Flow
-// Site: automationexercise.com/products
-// Must: relevant results, no results, partial/exact match
-// ══════════════════════════════════════════════════════════
 
 test.describe('Assignment 4 - Scenario 2: Search Flow', () => {
 
   // ── Positive Case: Exact match search ─────────────────
   test('Search returns relevant results for exact keyword', async ({ page }) => {
-    await page.goto('https://automationexercise.com/products', { waitUntil: 'domcontentloaded' });
+    await gotoWithRetry(page, 'https://automationexercise.com/products');
 
     // Step 1 — Enter search keyword
     await page.locator('#search_product').fill('Tops');
-    await page.locator('#submit_search').click();
+    await clickWithAdRetry(page.locator('#submit_search'), page);
 
     // Validate 1 — URL reflects search
     await expect(page).toHaveURL(/products/);
@@ -35,11 +31,11 @@ test.describe('Assignment 4 - Scenario 2: Search Flow', () => {
 
   // ── Partial match search ───────────────────────────────
   test('Partial match search returns results', async ({ page }) => {
-    await page.goto('https://automationexercise.com/products', { waitUntil: 'domcontentloaded' });
+    await gotoWithRetry(page, 'https://automationexercise.com/products');
 
     // Step 1 — Enter partial keyword
     await page.locator('#search_product').fill('jean');
-    await page.locator('#submit_search').click();
+    await clickWithAdRetry(page.locator('#submit_search'), page);
 
     // Validate 1 — Results section appears
     await expect(page.getByText('Searched Products')).toBeVisible({ timeout: 15000 });
@@ -51,12 +47,12 @@ test.describe('Assignment 4 - Scenario 2: Search Flow', () => {
 
   // ── Case sensitivity check ─────────────────────────────
   test('Search is not case sensitive', async ({ page }) => {
-    await page.goto('https://automationexercise.com/products', { waitUntil: 'domcontentloaded' });
+    await gotoWithRetry(page, 'https://automationexercise.com/products');
 
     // Search with lowercase first
     await page.locator('#search_product').clear();
     await page.locator('#search_product').fill('tops');
-    await page.locator('#submit_search').click();
+    await clickWithAdRetry(page.locator('#submit_search'), page);
     await expect(page.getByText('Searched Products')).toBeVisible({ timeout: 15000 });
     await page.waitForSelector('.productinfo', { timeout: 10000 });
     const lowerResults = await page.locator('.productinfo').count();
@@ -64,7 +60,7 @@ test.describe('Assignment 4 - Scenario 2: Search Flow', () => {
     // Clear field before searching again to avoid stale/concatenated query
     await page.locator('#search_product').clear();
     await page.locator('#search_product').fill('TOPS');
-    await page.locator('#submit_search').click();
+    await clickWithAdRetry(page.locator('#submit_search'), page);
     await expect(page.getByText('Searched Products')).toBeVisible({ timeout: 15000 });
     await page.waitForSelector('.productinfo', { timeout: 10000 });
     const upperResults = await page.locator('.productinfo').count();
@@ -75,11 +71,11 @@ test.describe('Assignment 4 - Scenario 2: Search Flow', () => {
 
   // ── Negative Case: No results scenario ────────────────
   test('No results scenario — invalid keyword shows empty results', async ({ page }) => {
-    await page.goto('https://automationexercise.com/products', { waitUntil: 'domcontentloaded' });
+    await gotoWithRetry(page, 'https://automationexercise.com/products');
 
     // Step 1 — Enter keyword that returns no results
     await page.locator('#search_product').fill('xyzabc123notexist');
-    await page.locator('#submit_search').click();
+    await clickWithAdRetry(page.locator('#submit_search'), page);
 
     // Validate 1 — Still on products page
     await expect(page).toHaveURL(/products/);

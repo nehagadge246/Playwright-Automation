@@ -1,4 +1,5 @@
 const { test, expect } = require('@playwright/test');
+const { gotoWithRetry, clickWithAdRetry } = require('./utils/siteHelpers');
 
 // ══════════════════════════════════════════════════════════
 // Assignment 4 | Scenario 1: Form-Based Application
@@ -10,7 +11,7 @@ test.describe('Assignment 4 - Scenario 1: Form-Based Application', () => {
 
   // ── Positive Case ──────────────────────────────────────
   test('Fill all required fields and submit registration form', async ({ page }) => {
-    await page.goto('https://automationexercise.com/login', { waitUntil: 'domcontentloaded' });
+    await gotoWithRetry(page, 'https://automationexercise.com/login');
 
     // Step 1 — Fill all required fields
     const uniqueEmail = `testuser${Date.now()}@example.com`;
@@ -18,7 +19,7 @@ test.describe('Assignment 4 - Scenario 1: Form-Based Application', () => {
     await page.locator('[data-qa="signup-email"]').fill(uniqueEmail);
 
     // Step 2 — Submit form
-    await page.locator('[data-qa="signup-button"]').click();
+    await clickWithAdRetry(page.locator('[data-qa="signup-button"]'), page);
 
     // Validate 1 — Moved to account details page
     await expect(page).toHaveURL(/signup/);
@@ -33,14 +34,14 @@ test.describe('Assignment 4 - Scenario 1: Form-Based Application', () => {
 
   // ── Negative Case: Invalid email format ────────────────
   test('Email format validation — invalid email shows error', async ({ page }) => {
-    await page.goto('https://automationexercise.com/login', { waitUntil: 'domcontentloaded' });
+    await gotoWithRetry(page, 'https://automationexercise.com/login');
 
     // Step 1 — Enter invalid email format
     await page.locator('[data-qa="signup-name"]').fill('Neha Test');
     await page.locator('[data-qa="signup-email"]').fill('invalid-email');
 
     // Step 2 — Submit
-    await page.locator('[data-qa="signup-button"]').click();
+    await clickWithAdRetry(page.locator('[data-qa="signup-button"]'), page);
 
     // Validate 1 — Still on login page (not redirected)
     await expect(page).toHaveURL(/login/);
@@ -56,18 +57,18 @@ test.describe('Assignment 4 - Scenario 1: Form-Based Application', () => {
 
   // ── Negative Case: Already registered email ────────────
   test('Required field validation — existing email shows error', async ({ page }) => {
-    await page.goto('https://automationexercise.com/login', { waitUntil: 'domcontentloaded' });
+    await gotoWithRetry(page, 'https://automationexercise.com/login');
 
     // Step 1 — Use an already registered email
     await page.locator('[data-qa="signup-name"]').fill('Neha Test');
     await page.locator('[data-qa="signup-email"]').fill('test@test.com');
 
     // Step 2 — Submit
-    await page.locator('[data-qa="signup-button"]').click();
+    await clickWithAdRetry(page.locator('[data-qa="signup-button"]'), page);
 
     // Validate 1 — Error message appears
     await expect(page.locator('p[style*="color: red"]'))
-      .toContainText('Email Address already exist!');
+      .toContainText('Email Address already exist!', { timeout: 15000 });
 
     // Validate 2 — Still on signup page (fixed: was /login, actually goes to /signup)
     await expect(page).toHaveURL(/signup/);

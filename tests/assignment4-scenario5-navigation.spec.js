@@ -1,4 +1,5 @@
 const { test, expect } = require('@playwright/test');
+const { gotoWithRetry, clickWithAdRetry } = require('./utils/siteHelpers');
 
 // ══════════════════════════════════════════════════════════
 // Assignment 4 | Scenario 5: Navigation Flow
@@ -10,17 +11,17 @@ test.describe('Assignment 4 - Scenario 5: Navigation Flow', () => {
 
   // ── Positive Case: Navigate across pages ──────────────
   test('Navigate Home → Products → Cart and validate each page', async ({ page }) => {
-    await page.goto('https://automationexercise.com', { waitUntil: 'domcontentloaded' });
+    await gotoWithRetry(page, 'https://automationexercise.com');
     await expect(page).toHaveURL('https://automationexercise.com/');
     await expect(page.locator('img[src="/static/images/home/logo.png"]')).toBeVisible();
 
     // Navigate to Products
-    await page.locator('a[href="/products"]').first().click();
+    await clickWithAdRetry(page.locator('a[href="/products"]').first(), page);
     await expect(page).toHaveURL(/products/);
     await expect(page.locator('h2.title')).toContainText('All Products');
 
     // Navigate to Cart
-    await page.locator('a[href="/view_cart"]').first().click();
+    await clickWithAdRetry(page.locator('a[href="/view_cart"]').first(), page);
     await expect(page).toHaveURL(/view_cart/);
   });
 
@@ -28,28 +29,24 @@ test.describe('Assignment 4 - Scenario 5: Navigation Flow', () => {
   test('Validate correct page title loads for each route', async ({ page }) => {
 
     // Products page
-    await page.goto('https://automationexercise.com/products',
-      { waitUntil: 'domcontentloaded', timeout: 60000 });
-    await expect(page).toHaveTitle(/Automation Exercise/);
+    await gotoWithRetry(page, 'https://automationexercise.com/products');
+    await expect(page).toHaveTitle(/Automation Exercise/, { timeout: 15000 });
     await expect(page.locator('h2.title')).toContainText('All Products');
 
     // Login page
-    await page.goto('https://automationexercise.com/login',
-      { waitUntil: 'domcontentloaded', timeout: 60000 });
-    await expect(page).toHaveTitle(/Automation Exercise/);
+    await gotoWithRetry(page, 'https://automationexercise.com/login');
+    await expect(page).toHaveTitle(/Automation Exercise/, { timeout: 15000 });
     await expect(page.locator('h2').first()).toBeVisible();
 
     // Contact page
-    await page.goto('https://automationexercise.com/contact_us',
-      { waitUntil: 'domcontentloaded', timeout: 60000 });
-    await expect(page).toHaveTitle(/Automation Exercise/);
+    await gotoWithRetry(page, 'https://automationexercise.com/contact_us');
+    await expect(page).toHaveTitle(/Automation Exercise/, { timeout: 15000 });
     await expect(page.getByRole('heading', { name: 'Contact Us' })).toBeVisible();
   });
 
   // ── Negative Case: Invalid route ──────────────────────
   test('Invalid URL redirects to 404 or home page', async ({ page }) => {
-    await page.goto('https://automationexercise.com/invalid-page-xyz',
-      { waitUntil: 'domcontentloaded', timeout: 60000 });
+    await gotoWithRetry(page, 'https://automationexercise.com/invalid-page-xyz');
 
     // Validate — either 404 page or redirected home
     const isHandled = page.url().includes('automationexercise.com');
@@ -59,18 +56,17 @@ test.describe('Assignment 4 - Scenario 5: Navigation Flow', () => {
 
   // ── Product detail navigation ──────────────────────────
   test('Product detail page shows correct breadcrumb and back navigation works', async ({ page }) => {
-    await page.goto('https://automationexercise.com/products',
-      { waitUntil: 'domcontentloaded', timeout: 60000 });
+    await gotoWithRetry(page, 'https://automationexercise.com/products');
 
     // Wait for products to load
     await expect(page.locator('.productinfo').first())
       .toBeVisible({ timeout: 10000 });
 
     // Click View Product link directly — avoids ad overlay issue
-    await page.locator('a[href="/product_details/1"]').click();
+    await clickWithAdRetry(page.locator('a[href="/product_details/1"]'), page);
 
     // Handle possible ad overlay by waiting for URL to change
-    await expect(page).toHaveURL(/product_details/, { timeout: 10000 });
+    await expect(page).toHaveURL(/product_details/, { timeout: 15000 });
 
     // Validate product detail page loaded
     await expect(page.locator('.product-information h2'))

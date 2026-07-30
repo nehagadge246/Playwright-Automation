@@ -1,4 +1,5 @@
 const { test, expect } = require('@playwright/test');
+const { gotoWithRetry, clickWithAdRetry } = require('./utils/siteHelpers');
 
 // ══════════════════════════════════════════════════════════
 // Assignment 4 | Scenario 3: Cart / Content Selection Flow
@@ -10,30 +11,29 @@ test.describe('Assignment 4 - Scenario 3: Cart Flow', () => {
 
   // ── Positive Case: Add item to cart ───────────────────
   test('Select item, add to cart and validate cart summary', async ({ page }) => {
-    await page.goto('https://automationexercise.com/products',
-      { waitUntil: 'domcontentloaded', timeout: 60000 });
+    await gotoWithRetry(page, 'https://automationexercise.com/products');
 
     // Step 1 — Hover first product and add to cart
     await page.locator('.productinfo').first().hover();
-    await page.locator('.productinfo .add-to-cart').first().click();
+    await clickWithAdRetry(page.locator('.productinfo .add-to-cart').first(), page);
 
     // Wait for modal to appear then close it
     const modal = page.locator('#cartModal');
-    await expect(modal).toBeVisible({ timeout: 10000 });
-    await page.getByRole('button', { name: 'Continue Shopping' }).click();
+    await expect(modal).toBeVisible({ timeout: 15000 });
+    await clickWithAdRetry(page.getByRole('button', { name: 'Continue Shopping' }), page);
     await expect(modal).not.toBeVisible({ timeout: 5000 });
 
     // Step 2 — Hover second product and add to cart
     await page.locator('.productinfo').nth(1).hover();
-    await page.locator('.productinfo .add-to-cart').nth(1).click();
+    await clickWithAdRetry(page.locator('.productinfo .add-to-cart').nth(1), page);
 
     // Wait for modal to appear again then close it
-    await expect(modal).toBeVisible({ timeout: 10000 });
-    await page.getByRole('button', { name: 'Continue Shopping' }).click();
+    await expect(modal).toBeVisible({ timeout: 15000 });
+    await clickWithAdRetry(page.getByRole('button', { name: 'Continue Shopping' }), page);
     await expect(modal).not.toBeVisible({ timeout: 5000 });
 
     // Step 3 — Navigate to cart
-    await page.locator('a[href="/view_cart"]').first().click();
+    await clickWithAdRetry(page.locator('a[href="/view_cart"]').first(), page);
 
     // Validate 1 — Cart page loaded
     await expect(page).toHaveURL(/view_cart/);
@@ -51,8 +51,7 @@ test.describe('Assignment 4 - Scenario 3: Cart Flow', () => {
 
   // ── Negative Case: Cart empty by default ──────────────
   test('Cart is empty on first visit', async ({ page }) => {
-    await page.goto('https://automationexercise.com/view_cart',
-      { waitUntil: 'domcontentloaded', timeout: 60000 });
+    await gotoWithRetry(page, 'https://automationexercise.com/view_cart');
 
     // Validate 1 — Cart page loaded
     await expect(page).toHaveURL(/view_cart/);
